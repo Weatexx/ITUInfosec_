@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;500;600;700;800&display=swap');
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    text-decoration: none;
+    font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+html {
+    scroll-behavior: auto;
+    scroll-padding-top: 70px;
+}
+
+html, body {
+    height: 100%;
+    background: #111;
+    overflow-x: hidden;
+}
+
+.header-wrapper {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    min-height: 100vh;
+    padding-top: 0;
+    overflow: hidden;
+}
+
+.header-wrapper::before {
+    display: none;
+}
+
+.header-wrapper::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #fff 0%, transparent 50%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 1rem 0;
+    transition: all 0.3s ease;
+    height: 70px;
+    background: rgba(17, 17, 17, 0.5);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.navbar::before {
+    display: none;
+}
+
+.nav-link {
+    transition: color 0.3s ease;
+    position: relative;
+}
+
+.nav-link:hover {
+    color: #0e6fa6 !important;
+}
+
+footer {
+    background-color: #0d0d0d;
+    color: #fff;
+    text-align: center;
+    padding: 20px 0;
+    position: relative;
+    z-index: 2;
+    margin-top: 4rem;
+}
+
+/* Kart container */
+
+.card {
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    height: auto;
+    width: 100%;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+/* İkon container */
+
+.icon-container {
+    background: linear-gradient(145deg, rgba(188, 188, 188, 0.17), rgba(97, 97, 97, 0.06));
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+    transition: transform 0.3s ease;
+}
+
+.icon-container:hover {
+    transform: scale(1.05);
+}
+
+.icon-container svg {
+    color: #0e6fa6;
+    width: 40px;
+    height: auto;
+}
+
+/* Paragraf */
+.cardbody p {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.hero {
+    padding-top: 120px;
+}
+
+/* Section'lar için scroll margin ayarı */
+section {
+    position: relative;
+    padding-top: 20px;
+}
+
+/* Bölüm başlıkları için ek boşluk */
+section > .row:first-child {
+    padding-top: 30px;
+}
+
+/* Smooth scroll için anchor link davranışı */
+a[href^="#"] {
+    scroll-behavior: smooth;
+}
+
+/* Her section için anchor'ları doğru pozisyonda göster */
+#bizkimiz {
+    padding-top: 70px;
+    margin-top: -30px;
+}
+
+#egitmenler {
+    padding-top: 70px;
+    margin-top: -30px;
+}
+
+#egitimlerimiz {
+    padding-top: 70px;
+    margin-top: -30px;
+}
+
+/* Sarı hüzme efekti - sadece yukarıdan aşağıya, daha kısa */
+.light-beam-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: -3;
+    pointer-events: none;
+}
+
+.light-beam-left {
+    position: absolute;
+    top: -50px;
+    left: 0;
+    width: 50%;
+    height: 40%; /* Daha kısa hüzme */
+    background: linear-gradient(to bottom, rgba(14, 111, 166, 0.15) 0%, transparent 100%);
+    filter: blur(40px);
+}
+
+.light-beam-right {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    width: 50%;
+    height: 40%; /* Daha kısa hüzme */
+    background: linear-gradient(to bottom, rgba(14, 111, 166, 0.15) 0%, transparent 100%);
+    filter: blur(40px);
+}
+
+/* Grid arkaplan yapısı - aşağıya doğru görünmez olan */
+.grid-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 1;
+    pointer-events: none;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,0) 100%);
+}
+
+.grid-background::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+/* Grid çizgilerini kalınlaştırmak için ek stil */
+.grid-background::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 1) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+/* Hero section için gradient overlay - grid'in üzerinde içeriğin okunabilir olması için */
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 50%, rgba(17, 17, 17, 0.7) 0%, rgba(17, 17, 17, 0.9) 100%);
+    z-index: -1;
+    pointer-events: none;
+}

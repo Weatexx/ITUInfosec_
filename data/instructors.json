@@ -1,0 +1,25 @@
+[
+    {
+        "id": 1,
+        "name": "Ahmet Yılmaz",
+        "photo": "uploads\/1765983306_WhatsApp Görsel 2025-12-07 saat 11.47.57_419cb9bb.jpg",
+        "expertise": "Web Güvenliği Uzmanı",
+        "bio": "10 yıldır web güvenliği alanında çalışmaktadır. CEH ve OSCP sertifikalarına sahiptir.",
+        "linkedin": "https:\/\/linkedin.com",
+        "twitter": "https:\/\/twitter.com",
+        "github": "https:\/\/github.com",
+        "certifications": "CEH, OSCP, CISSP",
+        "profile_url": ""
+    },
+    {
+        "id": 2,
+        "name": "Ayşe Demir",
+        "photo": "instructor2.jpg",
+        "expertise": "Zararlı Yazılım Analisti",
+        "bio": "Zararlı yazılım analizi ve tersine mühendislik konularında uzmandır.",
+        "linkedin": "https:\/\/linkedin.com",
+        "twitter": "https:\/\/twitter.com",
+        "github": "https:\/\/github.com",
+        "certifications": "GREM, CISSP"
+    }
+]

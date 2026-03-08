@@ -1,0 +1,23 @@
+[
+    {
+        "name": "Dr. Ayşe Yılmaz",
+        "expertise": "Siber İstihbarat Uzmanı",
+        "profile_url": "https:\/\/duckduckgo.com",
+        "photo": "uploads\/AKK_PNG.png",
+        "id": 1
+    },
+    {
+        "name": "Mehmet Demir",
+        "expertise": "Red Team Lead @ CyberCorp",
+        "profile_url": "https:\/\/duckduckgo.com",
+        "photo": "uploads\/1766065072_1508682996_ataturk.png",
+        "id": 2
+    },
+    {
+        "name": "Zeynep Kaya",
+        "expertise": "Kriptografi Araştırmacısı",
+        "profile_url": "https:\/\/duckduckgo.com",
+        "photo": "uploads\/2023_08_11_umit-ozdag-21884607.png",
+        "id": 3
+    }
+]
