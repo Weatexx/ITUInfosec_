@@ -1,12 +1,5 @@
 [
     {
-        "name": "Dr. Ayşe Yılmaz",
-        "expertise": "Siber İstihbarat Uzmanı",
-        "profile_url": "https:\/\/duckduckgo.com",
-        "photo": "uploads\/AKK_PNG.png",
-        "id": 1
-    },
-    {
         "name": "Mehmet Demir",
         "expertise": "Red Team Lead @ CyberCorp",
         "profile_url": "https:\/\/duckduckgo.com",

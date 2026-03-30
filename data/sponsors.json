@@ -1,14 +1,5 @@
 [
     {
-        "title": "Global CyberDefense",
-        "description": "Dünya çapında uçtan uca siber güvenlik çözümleri sunan lider teknoloji firması.",
-        "expertise": "Ana Sponsor",
-        "photo": "uploads\/1766064944_ITU_Bilgi_Guvenligi_ve_Krpitografi_Kulubu.jpg",
-        "created_at": "2025-12-18 16:20:00",
-        "id": 1,
-        "updated_at": "2025-12-18 14:35:44"
-    },
-    {
         "title": "TechSec Solutions",
         "description": "Ağ güvenliği ve bulut defansı konusunda uzmanlaşmış yenilikçi girişim.",
         "expertise": "Platin Sponsor",
@@ -25,5 +16,13 @@
         "created_at": "2025-12-18 16:22:00",
         "id": 3,
         "updated_at": "2025-12-18 14:36:26"
+    },
+    {
+        "title": "(Deneme)",
+        "description": "(Deneme)",
+        "expertise": "v(Deneme)",
+        "photo": "uploads\/1774865079_715523c0385d4099.png",
+        "created_at": "2026-03-30 12:04:39",
+        "id": 4
     }
 ]

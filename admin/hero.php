@@ -339,6 +339,7 @@ if ($isAjax && $_SERVER['REQUEST_METHOD'] === 'POST')
             let description = descInput.val().replace(/ - /g, '<br class="d-none d-md-inline">');
 
             const formData = {
+                csrf_token: $('input[name="csrf_token"]').val(),
                 top_title: topTitleInput.val(),
                 main_title: mainTitle,
                 description: description,
