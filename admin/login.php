@@ -1,7 +1,15 @@
 <?php
 session_start();
 require_once 'config.php';
+require_once 'security_utils.php';
 require_once __DIR__ . '/flatfile_auth.php';
+
+// Secure session configuration
+secureSessionConfiguration();
+setSecurityHeaders();
+
+// CSRF Token initialization
+initializeCsrfToken();
 
 // Oturum kontrolü
 if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
@@ -27,43 +35,12 @@ if (file_exists($blacklistFile)) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
-
-    // Use flat-file auth module for verification
-    if (authenticate_admin($username, $password)) {
-        $_SESSION['loggedin'] = true;
-        $_SESSION['username'] = $username;
-        header('Location: dashboard.php');
-        exit;
+    // Validate CSRF Token
+    if (!validateCsrfToken()) {
+        $error = 'Güvenlik doğrulaması başarısız. Lütfen sayfayı yenileyin.';
     } else {
-        // 2. Log Failed Attempt
-        $logs = file_exists($logsFile) ? json_decode(file_get_contents($logsFile), true) : [];
-        if (!is_array($logs))
-            $logs = [];
-
-        $newLog = [
-            'timestamp' => date('Y-m-d H:i:s'),
-            'ip' => $userIP,
-            'username' => $username,
-            'note' => 'failed_login'
-        ];
-
-        // Prepend new log
-        array_unshift($logs, $newLog);
-        file_put_contents($logsFile, json_encode($logs, JSON_PRETTY_PRINT));
-
-        // 3. Check Brute Force Threshold (5 attempts in 15 mins)
-        $recentFailures = 0;
-        $thresholdTime = time() - (15 * 60); // 15 minutes ago
-
-        foreach ($logs as $log) {
-            if ($log['ip'] === $userIP && strtotime($log['timestamp']) > $thresholdTime) {
-                $recentFailures++;
-            }
-        }
-
-        if ($recentFailures >= 5) {
+        // Rate limiting check
+        if (isRateLimited('login_' . $userIP, 5, 900)) {
             // Add to Blacklist
             $blacklist = file_exists($blacklistFile) ? json_decode(file_get_contents($blacklistFile), true) : [];
             if (!is_array($blacklist))
@@ -72,18 +49,57 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $blacklist[] = [
                 'ip' => $userIP,
                 'blocked_at' => date('Y-m-d H:i:s'),
-                'reason' => 'Brute Force Detection (5+ Failed Logins)'
+                'reason' => 'Çok fazla başarısız giriş denemesi (Brute Force)'
             ];
 
-            file_put_contents($blacklistFile, json_encode($blacklist, JSON_PRETTY_PRINT));
+            file_put_contents($blacklistFile, json_encode($blacklist, JSON_PRETTY_PRINT), LOCK_EX);
+            chmod($blacklistFile, 0644);
 
             header('Location: ../access_denied.php');
             exit;
         }
 
-        $error = "Kullanıcı adı veya şifre hatalı.";
+        $username = validateText($_POST['username'] ?? '', 255, true);
+        $password = $_POST['password'] ?? '';
+
+        if ($username === null || $username === '' || empty($password)) {
+            $error = 'Kullanıcı adı ve şifre gereklidir.';
+        } else {
+            // Use flat-file auth module for verification
+            if (authenticate_admin($username, $password)) {
+                resetRateLimit('login_' . $userIP);
+                $_SESSION['loggedin'] = true;
+                $_SESSION['username'] = $username;
+                // Regenerate session ID after login
+                session_regenerate_id(true);
+                header('Location: dashboard.php');
+                exit;
+            } else {
+                // 2. Log Failed Attempt
+                $logs = file_exists($logsFile) ? json_decode(file_get_contents($logsFile), true) : [];
+                if (!is_array($logs))
+                    $logs = [];
+
+                $newLog = [
+                    'timestamp' => date('Y-m-d H:i:s'),
+                    'ip' => $userIP,
+                    'username' => htmlspecialchars($username),
+                    'note' => 'failed_login'
+                ];
+
+                // Prepend new log (keep only last 1000)
+                array_unshift($logs, $newLog);
+                $logs = array_slice($logs, 0, 1000);
+                file_put_contents($logsFile, json_encode($logs, JSON_PRETTY_PRINT), LOCK_EX);
+                chmod($logsFile, 0644);
+
+                $error = "Kullanıcı adı veya şifre hatalı.";
+            }
+        }
     }
 }
+
+$csrfToken = getCsrfToken();
 ?>
 <!DOCTYPE html>
 <html lang="tr">
@@ -180,6 +196,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <i class="fas fa-key input-icon"></i>
                 <input type="password" name="password" class="form-control-glass" placeholder="Şifre" required>
             </div>
+
+            <?php echo getCsrfTokenField(); ?>
 
             <button type="submit" class="btn-glow w-100" style="border-radius: 10px; text-transform: uppercase;">
                 Sisteme Giriş Yap

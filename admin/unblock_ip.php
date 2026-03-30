@@ -1,13 +1,21 @@
 <?php
-// unblock_ip.php
-session_start();
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    echo '<div class="alert alert-danger">Yetkisiz erişim.</div>';
-    exit;
-}
+require_once 'security_utils.php';
+require_once 'config.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ip'])) {
-    $ipToUnblock = $_POST['ip'];
+requireSecureSession();
+
+// GET requests just show the security page, POST requests must have CSRF token
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+    
+    $ip = sanitizeText($_POST['ip'] ?? '', 45, true);
+    
+    if ($ip === null || empty($ip)) {
+        echo '<div class="alert alert-danger">Geçersiz IP adresi.</div>';
+        require 'security.php';
+        exit;
+    }
+    
     $file = '../data/blacklist.json';
 
     if (file_exists($file)) {
@@ -16,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ip'])) {
         $found = false;
 
         foreach ($blacklist as $entry) {
-            if ($entry['ip'] !== $ipToUnblock) {
+            if ($entry['ip'] !== $ip) {
                 $newBlacklist[] = $entry;
             } else {
                 $found = true;
@@ -24,7 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ip'])) {
         }
 
         if ($found) {
-            file_put_contents($file, json_encode($newBlacklist, JSON_PRETTY_PRINT));
+            file_put_contents($file, json_encode($newBlacklist, JSON_PRETTY_PRINT), LOCK_EX);
+            chmod($file, 0644);
             // Return updated view
             require 'security.php';
             exit;

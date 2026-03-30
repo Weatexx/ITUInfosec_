@@ -1,67 +1,67 @@
 <?php
+require_once 'security_utils.php';
 require_once 'data_manager.php';
 
-$name = $_POST['name'];
-$expertise = $_POST['expertise'];
-$profile_url = $_POST['profile_url'];
+requireSecureSession();
+requireCsrfToken();
 
-$targetDir = "uploads/";
-$uploadOk = 1;
-$photoPath = "";
+$name = validateText($_POST['name'] ?? '', 255, true);
+$expertise = validateText($_POST['expertise'] ?? '', 255, true);
+$profile_url = validateUrl($_POST['profile_url'] ?? '', false);
 
-if (!file_exists($targetDir)) {
-    mkdir($targetDir, 0777, true);
+$errors = [];
+
+// Validate required fields
+if ($name === null || $name === '') {
+    $errors['name'] = 'İsim gerekli';
 }
 
-// Dosya yükleme
-if (isset($_FILES["photo"]) && $_FILES["photo"]["error"] == 0) {
-    $targetFile = $targetDir . basename($_FILES["photo"]["name"]);
-    $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+if ($expertise === null || $expertise === '') {
+    $errors['expertise'] = 'Uzmanlık gerekli';
+}
 
-    $check = getimagesize($_FILES["photo"]["tmp_name"]);
-    if ($check !== false) {
-        // Dosya zaten varsa timestamp ekle
-        if (file_exists($targetFile)) {
-            $targetFile = $targetDir . time() . "_" . basename($_FILES["photo"]["name"]);
-        }
+if (!empty($_POST['profile_url']) && $profile_url === null) {
+    $errors['profile_url'] = 'Geçersiz URL';
+}
 
-        if ($_FILES["photo"]["size"] > 5000000) { // 5MB
-            echo "<h4 class='text-center text-danger'>Üzgünüm, dosya çok büyük.</h4>";
-            $uploadOk = 0;
-        } elseif ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg" && $imageFileType != "gif") {
-            echo "<h4 class='text-center text-danger'>Üzgünüm, yalnızca JPG, JPEG, PNG ve GIF dosyalarına izin verilmektedir.</h4>";
-            $uploadOk = 0;
-        } else {
-            if (move_uploaded_file($_FILES["photo"]["tmp_name"], $targetFile)) {
-                $photoPath = $targetFile;
-            } else {
-                echo "<h4 class='text-center text-danger'>Üzgünüm, dosya yüklenemedi.</h4>";
-                $uploadOk = 0;
-            }
-        }
+$photoPath = null;
+
+if (isset($_FILES["photo"])) {
+    if ($_FILES["photo"]["error"] == UPLOAD_ERR_NO_FILE) {
+        $errors['photo'] = 'Fotoğraf yüklenmelidir.';
     } else {
-        echo "<h4 class='text-center text-danger'>Dosya bir resim değil.</h4>";
-        $uploadOk = 0;
+        $photoPath = processImageUpload($_FILES["photo"], 'uploads/', 5242880);
+        if ($photoPath === null) {
+            $errors['photo'] = 'Fotoğraf yüklenemedi. Dosya bir resim olmalı (JPG, PNG, GIF, WebP), 5MB\'dan küçük olmalıdır.';
+        }
     }
 } else {
-    echo "<h4 class='text-center text-danger'>Fotoğraf yüklenmelidir.</h4>";
-    $uploadOk = 0;
+    $errors['photo'] = 'Fotoğraf yüklenmelidir.';
 }
 
-
-if ($uploadOk == 1 && !empty($photoPath)) {
+if (empty($errors)) {
     $data = [
         'name' => $name,
         'expertise' => $expertise,
-        'profile_url' => $profile_url,
+        'profile_url' => $profile_url ?? '',
         'photo' => $photoPath
     ];
 
     if ($dataManager->addInstructor($data)) {
-        echo "<h4 class='text-center text-success'>Eğitmen başarıyla eklendi.</h4>";
+        echo "<h4 class='text-center text-success'><i class='bi bi-check-circle me-2'></i>Eğitmen başarıyla eklendi.</h4>";
         include 'instructors.php';
     } else {
-        echo "<h4 class='text-center text-danger'>Eğitmen ekleme işlemi başarısız.</h4>";
+        echo "<h4 class='text-center text-danger'><i class='bi bi-exclamation-circle me-2'></i>Eğitmen ekleme işlemi başarısız.</h4>";
     }
+} else {
+    echo "<div class='alert alert-danger'>";
+    echo "<h5>Lütfen hataları düzeltiniz:</h5>";
+    echo "<ul>";
+    foreach ($errors as $field => $error) {
+        echo "<li>" . htmlspecialchars($error) . "</li>";
+    }
+    echo "</ul>";
+    echo "</div>";
+    include 'instructors.php';
 }
 ?>

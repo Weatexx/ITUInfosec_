@@ -1,7 +1,11 @@
 <?php
+require_once 'security_utils.php';
 require_once 'data_manager.php';
 
+requireSecureSession();
+
 $trainings = $dataManager->getTrainings();
+$csrfToken = getCsrfToken();
 ?>
 
 <style>
@@ -154,7 +158,10 @@ if (!empty($trainings)) {
             $.ajax({
                 url: 'delete_training.php',
                 method: 'POST',
-                data: { id: id },
+                data: { 
+                    id: id,
+                    csrf_token: '<?php echo htmlspecialchars($csrfToken); ?>'
+                },
                 success: function (response) {
                     $('#content-area').html(response);
                 },
@@ -170,6 +177,7 @@ if (!empty($trainings)) {
         <div class="form-container">
             <h4 class="form-title">Eğitim Ekle</h4>
             <form id="addTrainingForm" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
                 <div class="mb-3">
                     <label for="title" class="form-label">Başlık</label>
                     <input type="text" class="form-control" id="title" name="title" required>

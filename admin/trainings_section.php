@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'security_utils.php';
 require_once 'data_manager.php';
 
 if (!isset($_SESSION['loggedin'])) {
@@ -11,10 +12,26 @@ $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($isAjax) {
+        requireCsrfToken();
+        
         header('Content-Type: application/json; charset=utf-8');
+        
+        $title = validateText($_POST['title'] ?? '', 255, true);
+        $description = validateText($_POST['description'] ?? '', 1000, true);
+        
+        if ($title === null || $title === '') {
+            echo json_encode(['success' => false, 'message' => 'Başlık gerekli']);
+            exit;
+        }
+        
+        if ($description === null || $description === '') {
+            echo json_encode(['success' => false, 'message' => 'Açıklama gerekli']);
+            exit;
+        }
+        
         $data = [
-            'title' => $_POST['title'],
-            'description' => $_POST['description']
+            'title' => $title,
+            'description' => $description
         ];
 
         if ($dataManager->saveTrainingsSection($data)) {
@@ -31,6 +48,8 @@ $section = $dataManager->getTrainingsSection();
 if (!$section) {
     $section = ['title' => 'Eğitimlerimiz', 'description' => 'Siber güvenlik eğitimlerimiz.'];
 }
+
+$csrfToken = getCsrfToken();
 ?>
 
 <style>
@@ -57,6 +76,7 @@ if (!$section) {
     <h4 class="form-title">Eğitimler Bölümü Başlık ve Açıklama Düzenle</h4>
 
     <form id="trainingsSectionForm" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
         <div class="mb-3">
             <label for="title" class="form-label">Başlık</label>
             <input type="text" class="form-control" id="title" name="title"

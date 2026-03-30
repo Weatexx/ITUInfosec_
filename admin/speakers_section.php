@@ -1,16 +1,29 @@
 <?php
-session_start();
+require_once 'security_utils.php';
 require_once 'data_manager.php';
 
-if (!isset($_SESSION['loggedin'])) {
-    exit('Yetkisiz erişim');
-}
+requireSecureSession();
 
 // Handle AJAX POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    requireCsrfToken();
+    
+    $title = validateText($_POST['title'] ?? '', 255, true);
+    $description = validateText($_POST['description'] ?? '', 1000, true);
+    
+    if ($title === null || $title === '') {
+        echo json_encode(['success' => false, 'message' => 'Başlık gerekli']);
+        exit;
+    }
+    
+    if ($description === null || $description === '') {
+        echo json_encode(['success' => false, 'message' => 'Açıklama gerekli']);
+        exit;
+    }
+    
     $data = [
-        'title' => $_POST['title'],
-        'description' => $_POST['description'],
+        'title' => $title,
+        'description' => $description,
         'updated_at' => date('Y-m-d H:i:s')
     ];
 
@@ -24,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Get current data
 $speakersSection = $dataManager->getSpeakersSection();
+$csrfToken = getCsrfToken();
 // Defaults
 if (!$speakersSection) {
     $speakersSection = [
@@ -34,84 +48,168 @@ if (!$speakersSection) {
 ?>
 
 <style>
-    .preview-card {
-        background-color: #212529;
-        border-radius: 8px;
-        padding: 1.5rem;
-        text-align: center;
+    .section-info-header {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 15px;
     }
 
-    .preview-title {
-        font-size: 4rem;
-        background: linear-gradient(90deg, #ffffff, #000000);
+    .section-info-header .info-section h5 {
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+
+    .form-container-section {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+
+    .form-container-section .form-title {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        font-weight: 600;
+    }
+
+    .preview-card-section {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 30px 20px;
+        margin-bottom: 20px;
+        text-align: center;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .preview-heading-section {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(90deg, #ffffff, #00f2ea);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 1.5rem;
+        background-clip: text;
+        margin-bottom: 15px;
+        line-height: 1.3;
     }
 
-    .preview-description {
-        color: rgba(255, 255, 255, 0.61);
+    .preview-text-section {
+        color: rgba(255, 255, 255, 0.7);
         font-size: 1rem;
+        line-height: 1.6;
     }
 
-    /* Small screens preview adjustment */
-    @media (max-width: 768px) {
-        .preview-title {
-            font-size: 2.5rem;
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 992px) {
+        .section-info-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .preview-card-section {
+            margin-top: 20px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .form-actions .btn {
+            width: 100%;
+        }
+
+        .preview-heading-section {
+            font-size: 1.8rem;
         }
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4>Konuşmacılar Bölümü Ayarları</h4>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 style="margin: 0;">Konuşmacılar Bölümü Ayarları</h4>
+</div>
+
+<div class="section-info-header">
+    <div class="info-section">
+        <h5>Konuşmacılar Bölümü</h5>
+        <small class="text-muted">
+            <i class="bi bi-calendar-event me-1"></i>
+            Son Güncelleme: <?php echo isset($speakersSection['updated_at']) ? date('d.m.Y H:i', strtotime($speakersSection['updated_at'])) : 'Bilinmiyor'; ?>
+        </small>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="scrollToSpeakersForm()">
+        <i class="bi bi-pencil-square me-1"></i> Düzenle
+    </button>
 </div>
 
 <div class="row">
-    <div class="col-md-6">
-        <div class="card mb-4 bg-dark text-white border-secondary">
-            <div class="card-header">
-                <h5 class="mb-0">İçerik Düzenle</h5>
-            </div>
-            <div class="card-body">
-                <form id="speakersSectionForm">
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Bölüm Başlığı</label>
-                        <input type="text" class="form-control" id="title" name="title"
-                            value="<?php echo htmlspecialchars($speakersSection['title']); ?>" required>
-                    </div>
+    <div class="col-lg-6 mb-4 mb-lg-0">
+        <div class="form-container-section">
+            <div class="form-title">Düzenle</div>
+            <form id="speakersSectionForm">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Bölüm Başlığı <span style="color: #ff6b6b;">*</span></label>
+                    <input type="text" class="form-control" id="title" name="title"
+                        value="<?php echo htmlspecialchars($speakersSection['title']); ?>" required>
+                </div>
 
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Açıklama</label>
-                        <textarea class="form-control" id="description" name="description" rows="4"
-                            required><?php echo htmlspecialchars($speakersSection['description']); ?></textarea>
-                    </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Açıklama <span style="color: #ff6b6b;">*</span></label>
+                    <textarea class="form-control" id="description" name="description" rows="6" required><?php echo htmlspecialchars($speakersSection['description']); ?></textarea>
+                    <small class="text-muted d-block mt-1">Sayfada gösterilecek açıklama metni</small>
+                </div>
 
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Güncelle</button>
-                </form>
-            </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i> Kaydet
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div class="col-md-6">
-        <div class="card mb-4 bg-dark text-white">
-            <div class="card-header border-secondary">
-                <h5 class="mb-0">Canlı Önizleme</h5>
-            </div>
-            <div class="card-body">
-                <div class="preview-card">
-                    <h1 class="preview-title" id="preview_title">
-                        <?php echo htmlspecialchars($speakersSection['title']); ?>
-                    </h1>
-                    <p class="preview-description" id="preview_description">
-                        <?php echo nl2br(htmlspecialchars($speakersSection['description'])); ?>
-                    </p>
-                </div>
-            </div>
+    <div class="col-lg-6">
+        <div class="preview-card-section">
+            <h2 class="preview-heading-section" id="preview_title">
+                <?php echo htmlspecialchars($speakersSection['title']); ?>
+            </h2>
+            <p class="preview-text-section" id="preview_description">
+                <?php echo nl2br(htmlspecialchars($speakersSection['description'])); ?>
+            </p>
         </div>
+        <small class="text-muted d-block text-center">Canlı Önizleme</small>
     </div>
 </div>
 
 <script>
+    function scrollToSpeakersForm() {
+        document.querySelector('.form-container-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
     $(document).ready(function () {
         const titleInput = $('#title');
         const descInput = $('#description');
@@ -130,23 +228,24 @@ if (!$speakersSection) {
         $('#speakersSectionForm').on('submit', function (e) {
             e.preventDefault();
             const btn = $(this).find('button[type="submit"]');
-            btn.prop('disabled', true).html('Güncelleniyor...');
+            btn.prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Kaydediliyor...');
 
             $.ajax({
-                url: 'speakers_section.php', // Self
+                url: 'speakers_section.php',
                 type: 'POST',
                 data: $(this).serialize(),
                 dataType: 'json',
                 success: function (res) {
-                    btn.prop('disabled', false).html('<i class="bi bi-save me-1"></i> Güncelle');
+                    btn.prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i> Kaydet');
                     if (res.success) {
                         alert(res.message);
+                        loadContent('speakers_section');
                     } else {
                         alert('Bir hata oluştu.');
                     }
                 },
                 error: function () {
-                    btn.prop('disabled', false).html('<i class="bi bi-save me-1"></i> Güncelle');
+                    btn.prop('disabled', false).html('<i class="bi bi-check-circle me-1"></i> Kaydet');
                     alert('Bir hata oluştu.');
                 }
             });

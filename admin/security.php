@@ -1,5 +1,9 @@
 <?php
-// security.php
+require_once 'security_utils.php';
+
+requireSecureSession();
+
+$csrfToken = getCsrfToken();
 ?>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0"><i class="fas fa-shield-halved me-2 text-primary"></i>Güvenlik ve Erişim Kontrolü</h4>
@@ -34,7 +38,6 @@
                                 <th>Zaman</th>
                                 <th>IP Adresi</th>
                                 <th>Kullanıcı Adı Denemesi</th>
-                                <th>Şifre Denemesi</th>
                                 <th>Durum</th>
                             </tr>
                         </thead>
@@ -52,12 +55,11 @@
                                     echo "<td class='text-nowrap'>" . htmlspecialchars($log['timestamp']) . "</td>";
                                     echo "<td><span class='badge bg-secondary'>" . htmlspecialchars($log['ip']) . "</span></td>";
                                     echo "<td>" . htmlspecialchars($log['username']) . "</td>";
-                                    echo "<td class='font-monospace text-muted small'>" . htmlspecialchars(substr($log['password'], 0, 20)) . "</td>";
                                     echo "<td><span class='badge bg-warning text-dark'>Başarısız Giriş</span></td>";
                                     echo "</tr>";
                                 }
                             } else {
-                                echo "<tr><td colspan='5' class='text-center py-4 text-muted'>Henüz kayıtlı bir güvenlik ihlali yok.</td></tr>";
+                                echo "<tr><td colspan='4' class='text-center py-4 text-muted'>Henüz kayıtlı bir güvenlik ihlali yok.</td></tr>";
                             }
                             ?>
                         </tbody>
@@ -122,7 +124,10 @@
             $.ajax({
                 url: 'unblock_ip.php',
                 method: 'POST',
-                data: { ip: ip },
+                data: { 
+                    ip: ip,
+                    csrf_token: '<?php echo htmlspecialchars($csrfToken); ?>'
+                },
                 success: function (response) {
                     $('#content-area').html(response);
                 },

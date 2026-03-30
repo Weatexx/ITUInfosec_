@@ -1,12 +1,16 @@
 <?php
 session_start();
 require_once 'config.php';
+require_once 'security_utils.php';
 
 // Simple session check
 if (!isset($_SESSION['loggedin'])) {
   header('Location: login.php');
   exit;
 }
+
+// Get CSRF token for logout form
+$csrfToken = getCsrfToken();
 ?>
 <!doctype html>
 <html lang="tr">
@@ -261,9 +265,12 @@ if (!isset($_SESSION['loggedin'])) {
       </nav>
 
       <div class="p-3 border-top border-secondary border-opacity-25">
-        <a href="logout.php" class="btn btn-outline-danger w-100 rounded-pill">
-          <i class="bi bi-box-arrow-right"></i> Çıkış Yap
-        </a>
+        <form method="POST" action="logout.php" class="w-100">
+          <?php echo getCsrfTokenField(); ?>
+          <button type="submit" class="btn btn-outline-danger w-100 rounded-pill">
+            <i class="bi bi-box-arrow-right"></i> Çıkış Yap
+          </button>
+        </form>
       </div>
     </aside>
 

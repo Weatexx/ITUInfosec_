@@ -1,4 +1,13 @@
 <?php
+// Security Headers
+header('X-Frame-Options: DENY');
+header('X-Content-Type-Options: nosniff');
+header('X-XSS-Protection: 1; mode=block');
+header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+header('Content-Security-Policy: default-src \'self\'; script-src \'self\' code.jquery.com cdn.jsdelivr.net; style-src \'self\' cdn.jsdelivr.net \'unsafe-inline\'; img-src \'self\' data: https:; font-src \'self\' cdn.jsdelivr.net; connect-src \'self\'');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
+
 // Admin redirection
 if (strpos($_SERVER['REQUEST_URI'], '/admin') !== false) {
     header('Location: admin/login.php');
@@ -136,10 +145,10 @@ if (!$hero) {
                         </p>
                         <h1 class="glitch-title mb-4"
                             style="font-size: <?php echo $hero['main_title_size']; ?>px; line-height: 1.1;">
-                            <?php echo $hero['main_title']; ?>
+                            <?php echo nl2br($hero['main_title']); ?>
                         </h1>
-                        <p class="hero-desc mb-5" style="font-size: <?php echo $hero['description_size']; ?>px;">
-                            <?php echo $hero['description']; ?>
+                        <p class="hero-desc mb-5" style="font-size: <?php echo $hero['description_size']; ?>px; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">
+                            <?php echo nl2br($hero['description']); ?>
                         </p>
                         <button onclick="window.open('<?php echo htmlspecialchars($applyUrl); ?>', '_blank')"
                             class="btn-cyber">HEMEN BAŞVUR</button>
@@ -197,7 +206,7 @@ if (!$hero) {
                                 </h3>
                             <?php } ?>
 
-                            <p class="lead" style="color: rgba(255,255,255,0.8); line-height: 1.8;">
+                            <p class="lead" style="color: rgba(255,255,255,0.8); line-height: 1.8; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">
                                 <?php echo nl2br(htmlspecialchars($about['content'] ?? '')); ?>
                             </p>
                         </div>
@@ -214,7 +223,7 @@ if (!$hero) {
                         <?php echo htmlspecialchars($speakersSection['title'] ?? 'KONUŞMACILAR'); ?>
                     </h2>
                     <?php if (!empty($speakersSection['description'])) { ?>
-                        <p class="text-muted mt-3"><?php echo nl2br(htmlspecialchars($speakersSection['description'])); ?>
+                        <p class="text-muted mt-3" style="word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;"><?php echo nl2br(htmlspecialchars($speakersSection['description'])); ?>
                         </p>
                     <?php } ?>
                 </div>
@@ -265,7 +274,7 @@ if (!$hero) {
                 <div class="text-center mb-5 pb-3">
                     <h2 class="section-title"><?php echo htmlspecialchars($sponsorsSection['title'] ?? 'SPONSORLAR'); ?>
                     </h2>
-                    <p class="text-muted mt-3">
+                    <p class="text-muted mt-3" style="word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;">
                         <?php echo nl2br(htmlspecialchars($sponsorsSection['description'] ?? '')); ?>
                     </p>
                 </div>
@@ -376,7 +385,7 @@ if (!$hero) {
                 <!-- Brand Column -->
                 <div class="col-lg-4 text-center text-lg-start">
                     <a href="#" class="footer-brand">
-                        CYBER<span style="color: var(--primary-color);">CON</span>
+                        ITU CTF<span style="color: var(--primary-color);">'26</span>
                     </a>
                     <p class="text-muted mb-4">
                         Geleceğin siber güvenlik liderlerinin buluşma noktası.

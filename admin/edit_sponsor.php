@@ -1,15 +1,27 @@
 <?php
+require_once 'security_utils.php';
 require_once 'data_manager.php';
 
+requireSecureSession();
+
 if (isset($_GET['id'])) {
-    $id = $_GET['id'];
+    $id = validateInteger($_GET['id'] ?? null, 1, PHP_INT_MAX);
+    
+    if ($id === null) {
+        echo '<div class="alert alert-danger">Geçersiz sponsor ID\'si.</div>';
+        include 'sponsors.php';
+        exit;
+    }
+    
     $sponsor = $dataManager->getSponsor($id);
 
     if ($sponsor) {
+        $csrfToken = getCsrfToken();
         ?>
         <div class="form-container">
             <h4 class="form-title">Sponsor Düzenle</h4>
             <form id="editSponsorForm" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
                 <input type="hidden" name="id" value="<?php echo $sponsor['id']; ?>">
                 <input type="hidden" name="existing_photo" value="<?php echo htmlspecialchars($sponsor['photo']); ?>">
 

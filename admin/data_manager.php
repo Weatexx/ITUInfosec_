@@ -21,11 +21,17 @@ class DataManager
     private function writeJson($filename, $data)
     {
         $path = $this->getFilePath($filename);
-        // Ensure directory exists
+        // Ensure directory exists with secure permissions
         if (!file_exists(dirname($path))) {
-            mkdir(dirname($path), 0777, true);
+            mkdir(dirname($path), 0755, true);
+            chmod(dirname($path), 0755);
         }
-        return file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+        $result = file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+        // Set secure file permissions
+        if ($result !== false) {
+            chmod($path, 0644);
+        }
+        return $result;
     }
 
     // --- Speakers (Konuşmacılar) ---

@@ -1,7 +1,11 @@
 <?php
+require_once 'security_utils.php';
 require_once 'data_manager.php';
 
+requireSecureSession();
+
 $speakers = $dataManager->getSpeakers();
+$csrfToken = getCsrfToken();
 ?>
 
 <style>
@@ -142,7 +146,10 @@ if (!empty($speakers)) {
             $.ajax({
                 url: 'delete_speaker.php',
                 method: 'POST',
-                data: { id: id },
+                data: { 
+                    id: id,
+                    csrf_token: '<?php echo htmlspecialchars($csrfToken); ?>'
+                },
                 success: function (response) {
                     $('#content-area').html(response);
                 },
@@ -158,6 +165,7 @@ if (!empty($speakers)) {
         <div class="form-container">
             <h4 class="form-title">Konuşmacı Ekle</h4>
             <form id="addSpeakerForm" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
                 <div class="mb-3">
                     <label for="name" class="form-label">İsim</label>
                     <input type="text" class="form-control" id="name" name="name" required>

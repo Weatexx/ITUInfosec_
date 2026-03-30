@@ -1,7 +1,11 @@
 <?php
+require_once 'security_utils.php';
 require_once 'data_manager.php';
 
+requireSecureSession();
+
 $sponsors = $dataManager->getSponsors();
+$csrfToken = getCsrfToken();
 ?>
 
 <style>
@@ -155,7 +159,10 @@ if (!empty($sponsors)) {
             $.ajax({
                 url: 'delete_sponsor.php',
                 method: 'POST',
-                data: { id: id },
+                data: { 
+                    id: id,
+                    csrf_token: '<?php echo htmlspecialchars($csrfToken); ?>'
+                },
                 success: function (response) {
                     $('#content-area').html(response);
                 },
@@ -171,6 +178,7 @@ if (!empty($sponsors)) {
         <div class="form-container">
             <h4 class="form-title">Sponsor Ekle</h4>
             <form id="addSponsorForm" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
                 <div class="mb-3">
                     <label for="title" class="form-label">Firma Adı</label>
                     <input type="text" class="form-control" id="title" name="title" required>

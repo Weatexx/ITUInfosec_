@@ -1,69 +1,73 @@
 <?php
+require_once 'security_utils.php';
 require_once 'data_manager.php';
 
-$id = isset($_POST['instructor_id']) ? (int) $_POST['instructor_id'] : 0;
-$name = $_POST['name'];
-$expertise = $_POST['expertise'];
-$profile_url = $_POST['profile_url'];
+requireSecureSession();
+requireCsrfToken();
 
-if ($id <= 0) {
-    echo "<div class='alert alert-danger'>Geçersiz eğitmen ID'si.</div>";
-    exit;
+$id = validateInteger($_POST['instructor_id'] ?? null, 1, PHP_INT_MAX);
+$name = validateText($_POST['name'] ?? '', 255, true);
+$expertise = validateText($_POST['expertise'] ?? '', 255, true);
+$profile_url = validateUrl($_POST['profile_url'] ?? '', false);
+$existingPhoto = $_POST['existing_photo'] ?? '';
+
+$errors = [];
+
+if ($id === null) {
+    $errors['id'] = 'Geçersiz eğitmen ID\'si';
 }
 
-$updateData = [
-    'name' => $name,
-    'expertise' => $expertise,
-    'profile_url' => $profile_url
-];
+if ($name === null || $name === '') {
+    $errors['name'] = 'İsim gerekli';
+}
 
-// Dosya yükleme
-if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
-    $targetDir = "uploads/";
-    if (!file_exists($targetDir)) {
-        mkdir($targetDir, 0777, true);
-    }
+if ($expertise === null || $expertise === '') {
+    $errors['expertise'] = 'Uzmanlık gerekli';
+}
 
-    $fileName = time() . '_' . basename($_FILES["photo"]["name"]);
-    $targetFile = $targetDir . $fileName;
-    $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
-    $uploadOk = 1;
+if (!empty($_POST['profile_url']) && $profile_url === null) {
+    $errors['profile_url'] = 'Geçersiz URL';
+}
 
-    $check = getimagesize($_FILES["photo"]["tmp_name"]);
-    if ($check === false) {
-        echo "<div class='alert alert-danger'>Dosya bir resim değil.</div>";
-        $uploadOk = 0;
-    }
+$photoPath = $existingPhoto;
 
-    if ($_FILES["photo"]["size"] > 5000000) {
-        echo "<div class='alert alert-danger'>Üzgünüm, dosya çok büyük (max: 5MB).</div>";
-        $uploadOk = 0;
-    }
-
-    if ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg" && $imageFileType != "gif") {
-        echo "<div class='alert alert-danger'>Üzgünüm, yalnızca JPG, JPEG, PNG ve GIF dosyalarına izin verilmektedir.</div>";
-        $uploadOk = 0;
-    }
-
-    if ($uploadOk != 0 && move_uploaded_file($_FILES["photo"]["tmp_name"], $targetFile)) {
-        $updateData['photo'] = $targetFile;
-
-        // delete old photo maybe? Optional but good practice.
-        // We'd need to fetch old data first.
-        $oldData = $dataManager->getInstructor($id);
-        if ($oldData && !empty($oldData['photo']) && file_exists($oldData['photo'])) {
-            unlink($oldData['photo']);
+// Process new photo if uploaded
+if (isset($_FILES["photo"]) && $_FILES["photo"]["error"] !== UPLOAD_ERR_NO_FILE) {
+    $photoPath = processImageUpload($_FILES["photo"], 'uploads/', 5242880);
+    if ($photoPath === null) {
+        $errors['photo'] = 'Fotoğraf yüklenemedi. Dosya bir resim olmalı (JPG, PNG, GIF, WebP), 5MB\'dan küçük olmalıdır.';
+    } else {
+        // Delete old photo if exists and is different
+        if (!empty($existingPhoto) && file_exists($existingPhoto) && $existingPhoto !== $photoPath) {
+            @unlink($existingPhoto);
         }
-
-    } else if ($uploadOk != 0) {
-        echo "<div class='alert alert-danger'>Üzgünüm, dosya yüklenemedi.</div>";
     }
 }
 
-if ($dataManager->updateInstructor($id, $updateData)) {
-    echo "<div class='alert alert-success'>Eğitmen başarıyla güncellendi.</div>";
-    echo "<script>setTimeout(function() { loadContent('instructors'); }, 1500);</script>";
+if (empty($errors)) {
+    $updateData = [
+        'name' => $name,
+        'expertise' => $expertise,
+        'profile_url' => $profile_url ?? '',
+        'photo' => $photoPath
+    ];
+
+    if ($dataManager->updateInstructor($id, $updateData)) {
+        echo "<h4 class='text-center text-success'><i class='bi bi-check-circle me-2'></i>Eğitmen başarıyla güncellendi.</h4>";
+        include 'instructors.php';
+    } else {
+        echo "<h4 class='text-center text-danger'><i class='bi bi-exclamation-circle me-2'></i>Güncelleme işlemi başarısız.</h4>";
+        include 'instructors.php';
+    }
 } else {
-    echo "<div class='alert alert-danger'>Güncelleme hatası.</div>";
+    echo "<div class='alert alert-danger'>";
+    echo "<h5>Lütfen hataları düzeltiniz:</h5>";
+    echo "<ul>";
+    foreach ($errors as $field => $error) {
+        echo "<li>" . htmlspecialchars($error) . "</li>";
+    }
+    echo "</ul>";
+    echo "</div>";
+    include 'instructors.php';
 }
 ?>

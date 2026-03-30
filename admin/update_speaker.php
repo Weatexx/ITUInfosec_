@@ -1,63 +1,68 @@
 <?php
+require_once 'security_utils.php';
 require_once 'data_manager.php';
 
-$id = $_POST['id'];
-$name = $_POST['name'];
-$expertise = $_POST['expertise'];
-$profile_url = $_POST['profile_url'] ?? '';
-$photoPath = $_POST['existing_photo'];
+requireSecureSession();
+requireCsrfToken();
 
-$targetDir = "uploads/";
-$uploadOk = 1;
+$id = validateInteger($_POST['id'] ?? null, 1, PHP_INT_MAX);
+$name = validateText($_POST['name'] ?? '', 255, true);
+$expertise = validateText($_POST['expertise'] ?? '', 255, true);
+$profile_url = validateUrl($_POST['profile_url'] ?? '', false);
+$existingPhoto = $_POST['existing_photo'] ?? '';
 
-if (!file_exists($targetDir)) {
-    mkdir($targetDir, 0777, true);
+$errors = [];
+
+if ($id === null) {
+    $errors['id'] = 'Geçersiz konuşmacı ID\'si';
 }
 
-// Yeni fotoğraf yüklendi mi?
-if (isset($_FILES["photo"]) && $_FILES["photo"]["error"] == 0) {
-    $targetFile = $targetDir . basename($_FILES["photo"]["name"]);
-    $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
+if ($name === null || $name === '') {
+    $errors['name'] = 'İsim gerekli';
+}
 
-    $check = getimagesize($_FILES["photo"]["tmp_name"]);
-    if ($check !== false) {
-        if (file_exists($targetFile)) {
-            $targetFile = $targetDir . time() . "_" . basename($_FILES["photo"]["name"]);
-        }
+if ($expertise === null || $expertise === '') {
+    $errors['expertise'] = 'Uzmanlık gerekli';
+}
 
-        if ($_FILES["photo"]["size"] > 5000000) {
-            echo "<h4 class='text-center text-danger'>Üzgünüm, dosya çok büyük.</h4>";
-            $uploadOk = 0;
-        } elseif ($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg" && $imageFileType != "gif") {
-            echo "<h4 class='text-center text-danger'>Üzgünüm, yalnızca JPG, JPEG, PNG ve GIF dosyalarına izin verilmektedir.</h4>";
-            $uploadOk = 0;
-        } else {
-            if (move_uploaded_file($_FILES["photo"]["tmp_name"], $targetFile)) {
-                $photoPath = $targetFile;
-            } else {
-                echo "<h4 class='text-center text-danger'>Üzgünüm, dosya yüklenemedi.</h4>";
-                $uploadOk = 0;
-            }
-        }
-    } else {
-        echo "<h4 class='text-center text-danger'>Dosya bir resim değil.</h4>";
-        $uploadOk = 0;
+if (!empty($_POST['profile_url']) && $profile_url === null) {
+    $errors['profile_url'] = 'Geçersiz URL';
+}
+
+$photoPath = $existingPhoto;
+
+// Process new photo if uploaded
+if (isset($_FILES["photo"]) && $_FILES["photo"]["error"] !== UPLOAD_ERR_NO_FILE) {
+    $photoPath = processImageUpload($_FILES["photo"], 'uploads/', 5242880);
+    if ($photoPath === null) {
+        $errors['photo'] = 'Fotoğraf yüklenemedi. Dosya bir resim olmalı (JPG, PNG, GIF, WebP), 5MB\'dan küçük olmalıdır.';
     }
 }
 
-if ($uploadOk == 1) {
+if (empty($errors)) {
     $data = [
         'name' => $name,
         'expertise' => $expertise,
-        'profile_url' => $profile_url,
+        'profile_url' => $profile_url ?? '',
         'photo' => $photoPath
     ];
 
     if ($dataManager->updateSpeaker($id, $data)) {
-        echo "<h4 class='text-center text-success'>Konuşmacı başarıyla güncellendi.</h4>";
+        echo "<h4 class='text-center text-success'><i class='bi bi-check-circle me-2'></i>Konuşmacı başarıyla güncellendi.</h4>";
         include 'speakers.php';
     } else {
-        echo "<h4 class='text-center text-danger'>Güncelleme işlemi başarısız.</h4>";
+        echo "<h4 class='text-center text-danger'><i class='bi bi-exclamation-circle me-2'></i>Güncelleme işlemi başarısız.</h4>";
+        include 'speakers.php';
     }
+} else {
+    echo "<div class='alert alert-danger'>";
+    echo "<h5>Lütfen hataları düzeltiniz:</h5>";
+    echo "<ul>";
+    foreach ($errors as $field => $error) {
+        echo "<li>" . htmlspecialchars($error) . "</li>";
+    }
+    echo "</ul>";
+    echo "</div>";
+    include 'speakers.php';
 }
 ?>

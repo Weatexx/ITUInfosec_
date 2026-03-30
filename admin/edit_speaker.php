@@ -1,15 +1,27 @@
 <?php
+require_once 'security_utils.php';
 require_once 'data_manager.php';
 
+requireSecureSession();
+
 if (isset($_GET['id'])) {
-    $id = $_GET['id'];
+    $id = validateInteger($_GET['id'] ?? null, 1, PHP_INT_MAX);
+    
+    if ($id === null) {
+        echo '<div class="alert alert-danger">Geçersiz konuşmacı ID\'si.</div>';
+        include 'speakers.php';
+        exit;
+    }
+    
     $speaker = $dataManager->getSpeaker($id);
 
     if ($speaker) {
+        $csrfToken = getCsrfToken();
         ?>
         <div class="form-container">
             <h4 class="form-title">Konuşmacı Düzenle</h4>
             <form id="editSpeakerForm" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
                 <input type="hidden" name="id" value="<?php echo $speaker['id']; ?>">
                 <input type="hidden" name="existing_photo" value="<?php echo htmlspecialchars($speaker['photo']); ?>">
 

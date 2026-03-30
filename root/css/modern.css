@@ -57,6 +57,9 @@ body {
     position: relative;
     line-height: 1.7;
     -webkit-font-smoothing: antialiased;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 h1,
@@ -70,6 +73,9 @@ h6 {
     letter-spacing: 0.5px;
     font-weight: 700;
     color: #fff;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 /* Background Animation Placeholder (SVG handled in HTML) */

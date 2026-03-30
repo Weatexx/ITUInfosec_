@@ -1,5 +1,8 @@
 <?php
+require_once 'security_utils.php';
 require_once 'data_manager.php';
+
+requireSecureSession();
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     echo "<h4 class='text-center text-danger'>Geçersiz eğitmen ID'si.</h4>";
@@ -13,11 +16,15 @@ if (!$instructor) {
     echo "<h4 class='text-center text-danger'>Eğitmen bulunamadı.</h4>";
     exit;
 }
+
+$csrfToken = getCsrfToken();
 ?>
 
 <h4>Eğitmen Düzenle</h4>
 <form id="editInstructorForm" enctype="multipart/form-data" method="post">
+    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
     <input type="hidden" name="instructor_id" value="<?php echo $instructor['id']; ?>">
+    <input type="hidden" name="existing_photo" value="<?php echo htmlspecialchars($instructor['photo']); ?>">
 
     <div class="mb-3">
         <label for="name" class="form-label">İsim</label>
