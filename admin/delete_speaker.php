@@ -3,21 +3,31 @@ require_once 'security_utils.php';
 require_once 'data_manager.php';
 
 requireSecureSession();
-requireCsrfToken();
+
+$response = ['success' => false, 'message' => ''];
+
+// Check CSRF token
+if (!validateCsrfToken()) {
+    http_response_code(403);
+    $response['message'] = 'CSRF token kontrolü başarısız.';
+    echo json_encode($response);
+    exit;
+}
 
 $id = validateInteger($_POST['id'] ?? null, 1, PHP_INT_MAX);
 
 if ($id === null) {
-    echo "<h4 class='text-center text-danger'><i class='bi bi-exclamation-circle me-2'></i>Geçersiz konuşmacı ID'si.</h4>";
-    include 'speakers.php';
+    $response['message'] = 'Geçersiz konuşmacı ID\'si.';
+    echo json_encode($response);
     exit;
 }
 
 if ($dataManager->deleteSpeaker($id)) {
-    echo "<h4 class='text-center text-success'><i class='bi bi-check-circle me-2'></i>Konuşmacı başarıyla silindi.</h4>";
-    include 'speakers.php';
+    $response['success'] = true;
+    $response['message'] = 'Konuşmacı başarıyla silindi.';
+    echo json_encode($response);
 } else {
-    echo "<h4 class='text-center text-danger'><i class='bi bi-exclamation-circle me-2'></i>Silme işlemi başarısız.</h4>";
-    include 'speakers.php';
+    $response['message'] = 'Silme işlemi başarısız.';
+    echo json_encode($response);
 }
 ?>

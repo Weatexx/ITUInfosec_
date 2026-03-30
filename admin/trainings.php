@@ -88,6 +88,9 @@ $csrfToken = getCsrfToken();
     }
 </style>
 
+<!-- Hidden CSRF Token for AJAX requests -->
+<input type="hidden" id="csrf_token_input" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4>Eğitimler Listesi</h4>
     <button class='btn btn-success' onclick='showAddTrainingForm()'>
@@ -155,18 +158,31 @@ if (!empty($trainings)) {
 
     function deleteTraining(id) {
         if (confirm('Bu eğitimi silmek istediğinize emin misiniz?')) {
+            var csrfToken = '<?php echo htmlspecialchars($csrfToken); ?>';
+            console.log('CSRF Token:', csrfToken);
+            console.log('Training ID:', id);
+            
             $.ajax({
                 url: 'delete_training.php',
                 method: 'POST',
                 data: { 
                     id: id,
-                    csrf_token: '<?php echo htmlspecialchars($csrfToken); ?>'
+                    csrf_token: csrfToken
                 },
+                dataType: 'json',
                 success: function (response) {
-                    $('#content-area').html(response);
+                    console.log('Response:', response);
+                    if (response.success) {
+                        alert(response.message);
+                        loadContent('trainings');
+                    } else {
+                        alert('Hata: ' + response.message);
+                    }
                 },
-                error: function () {
-                    $('#content-area').html('<div class="alert alert-danger">Silme işlemi gerçekleştirilemedi.</div>');
+                error: function (xhr, status, error) {
+                    console.error('Error:', error);
+                    console.error('Response:', xhr.responseText);
+                    alert('Silme işlemi gerçekleştirilemedi: ' + error);
                 }
             });
         }

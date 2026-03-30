@@ -1,11 +1,11 @@
 [
     {
-        "top_title": "İstanbul   Teknik   Üniversitesi",
-        "main_title": "ITU Infosec <br>ve Eğitimleri",
-        "description": "Siber güvenlik alanında öncü eğitimler.",
-        "top_title_size": 14,
-        "main_title_size": 36,
-        "description_size": 16,
-        "updated_at": "2026-03-03 11:08:34"
+        "top_title": "İstanbul   Teknik   Üniversitesi (Deneme)",
+        "main_title": "ITU Infosec ve Eğitimleri (Deneme)",
+        "description": "Siber güvenlik alanında öncü eğitimler. (Deneme)",
+        "top_title_size": 19,
+        "main_title_size": 43,
+        "description_size": 18,
+        "updated_at": "2026-03-30 12:12:11"
     }
 ]

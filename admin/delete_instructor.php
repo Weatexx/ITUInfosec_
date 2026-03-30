@@ -3,13 +3,22 @@ require_once 'security_utils.php';
 require_once 'data_manager.php';
 
 requireSecureSession();
-requireCsrfToken();
+
+$response = ['success' => false, 'message' => ''];
+
+// Check CSRF token
+if (!validateCsrfToken()) {
+    http_response_code(403);
+    $response['message'] = 'CSRF token kontrolü başarısız.';
+    echo json_encode($response);
+    exit;
+}
 
 $id = validateInteger($_POST['id'] ?? null, 1, PHP_INT_MAX);
 
 if ($id === null) {
-    echo "<h4 class='text-center text-danger'><i class='bi bi-exclamation-circle me-2'></i>Geçersiz eğitmen ID'si.</h4>";
-    include 'instructors.php';
+    $response['message'] = 'Geçersiz eğitmen ID\'si.';
+    echo json_encode($response);
     exit;
 }
 
@@ -23,14 +32,15 @@ if ($instructor) {
     }
 
     if ($dataManager->deleteInstructor($id)) {
-        echo "<h4 class='text-center text-success'><i class='bi bi-check-circle me-2'></i>Eğitmen başarıyla silindi.</h4>";
-        include 'instructors.php';
+        $response['success'] = true;
+        $response['message'] = 'Eğitmen başarıyla silindi.';
+        echo json_encode($response);
     } else {
-        echo "<h4 class='text-center text-danger'><i class='bi bi-exclamation-circle me-2'></i>Silme işlemi başarısız.</h4>";
-        include 'instructors.php';
+        $response['message'] = 'Silme işlemi başarısız.';
+        echo json_encode($response);
     }
 } else {
-    echo "<h4 class='text-center text-danger'><i class='bi bi-exclamation-circle me-2'></i>Eğitmen bulunamadı.</h4>";
-    include 'instructors.php';
+    $response['message'] = 'Eğitmen bulunamadı.';
+    echo json_encode($response);
 }
 ?>

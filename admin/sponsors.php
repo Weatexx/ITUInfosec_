@@ -91,6 +91,9 @@ $csrfToken = getCsrfToken();
     }
 </style>
 
+<!-- Hidden CSRF Token for AJAX requests -->
+<input type="hidden" id="csrf_token_input" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4>Sponsorlar Listesi</h4>
     <button class='btn btn-success' onclick='showAddSponsorForm()'>
@@ -127,7 +130,7 @@ if (!empty($sponsors)) {
         echo "<td>
                 <div class='action-buttons'>
                     <button class='btn btn-warning btn-sm' onclick='editSponsor(" . $row['id'] . ")'><i class='bi bi-pencil me-1'></i>Düzenle</button>
-                    <button class='btn btn-danger btn-sm' onclick='deleteSponsor(" . $row['id'] . ")'><i class='bi bi-trash me-1'></i>Sil</button>
+                    <button class='btn btn-danger btn-sm' onclick='try { deleteSponsor(" . $row['id'] . "); } catch(e) { console.error(\"Delete error:\", e); }'><i class='bi bi-trash me-1'></i>Sil</button>
                 </div>
               </td>";
         echo "</tr>";
@@ -140,7 +143,11 @@ if (!empty($sponsors)) {
 ?>
 
 <script>
-    function editSponsor(id) {
+    console.log('Sponsors page loaded');
+    console.log('jQuery available:', typeof $ !== 'undefined' ? 'YES' : 'NO');
+    console.log('CSRF Token on page:', document.getElementById('csrf_token_input') ? document.getElementById('csrf_token_input').value : 'NOT FOUND');
+    
+    window.editSponsor = function(id) {
         $.ajax({
             url: 'edit_sponsor.php',
             method: 'GET',
@@ -152,33 +159,50 @@ if (!empty($sponsors)) {
                 $('#content-area').html('<div class="alert alert-danger">Düzenleme formu yüklenemedi.</div>');
             }
         });
-    }
+    };
 
-    function deleteSponsor(id) {
+    window.deleteSponsor = function(id) {
         if (confirm('Bu sponsoru silmek istediğinize emin misiniz?')) {
+            var csrfToken = '<?php echo htmlspecialchars($csrfToken); ?>';
+            var tokenFromInput = $('#csrf_token_input').val();
+            console.log('CSRF Token (inline):', csrfToken);
+            console.log('CSRF Token (input):', tokenFromInput);
+            console.log('Silinen ID:', id);
+            
             $.ajax({
                 url: 'delete_sponsor.php',
                 method: 'POST',
                 data: { 
                     id: id,
-                    csrf_token: '<?php echo htmlspecialchars($csrfToken); ?>'
+                    csrf_token: csrfToken
                 },
+                dataType: 'json',
                 success: function (response) {
-                    $('#content-area').html(response);
+                    console.log('Response:', response);
+                    if (response.success) {
+                        alert(response.message);
+                        loadContent('sponsors');
+                    } else {
+                        alert('Hata: ' + response.message);
+                    }
                 },
-                error: function () {
-                    $('#content-area').html('<div class="alert alert-danger">Silme işlemi gerçekleştirilemedi.</div>');
+                error: function (xhr, status, error) {
+                    console.error('Error:', error);
+                    console.error('Status:', status);
+                    console.error('Response:', xhr.responseText);
+                    alert('Silme işlemi gerçekleştirilemedi: ' + error);
                 }
             });
         }
-    }
+    };
 
-    function showAddSponsorForm() {
+    window.showAddSponsorForm = function() {
+        var csrfToken = '<?php echo htmlspecialchars($csrfToken); ?>';
         const formHtml = `
         <div class="form-container">
             <h4 class="form-title">Sponsor Ekle</h4>
             <form id="addSponsorForm" enctype="multipart/form-data">
-                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
+                <input type="hidden" name="csrf_token" value="${csrfToken}">
                 <div class="mb-3">
                     <label for="title" class="form-label">Firma Adı</label>
                     <input type="text" class="form-control" id="title" name="title" required>
@@ -230,9 +254,9 @@ if (!empty($sponsors)) {
                 }
             });
         };
-    }
+    };
 
-    function hideAddSponsorForm() {
+    window.hideAddSponsorForm = function() {
         loadContent('sponsors');
-    }
+    };
 </script>

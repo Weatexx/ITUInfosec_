@@ -27,8 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_hero'])) {
     if (empty($errors)) {
         $data = [
             'top_title' => $top_title,
-            'main_title' => $main_title,
-            'description' => $description,
+            'main_title' => nl2br($main_title),
+            'description' => nl2br($description),
             'top_title_size' => $top_title_size,
             'main_title_size' => $main_title_size,
             'description_size' => $description_size,
@@ -250,7 +250,7 @@ if ($isAjax && $_SERVER['REQUEST_METHOD'] === 'POST')
 
                 <div class="mb-3">
                     <label for="main_title" class="form-label">Ana Başlık <span style="color: #ff6b6b;">*</span></label>
-                    <textarea class="form-control" id="main_title" name="main_title" rows="3" required><?php echo htmlspecialchars($hero['main_title'] ?? ''); ?></textarea>
+                    <textarea class="form-control" id="main_title" name="main_title" rows="3" required><?php echo htmlspecialchars(str_replace('<br>', '', $hero['main_title'] ?? '')); ?></textarea>
                     <small class="text-muted d-block mt-1">Satır kesmesi için tire (-) kullanın.</small>
                     <div class="font-size-control">
                         <span class="font-size-label">Punto:</span>
@@ -261,7 +261,7 @@ if ($isAjax && $_SERVER['REQUEST_METHOD'] === 'POST')
 
                 <div class="mb-3">
                     <label for="description" class="form-label">Açıklama <span style="color: #ff6b6b;">*</span></label>
-                    <textarea class="form-control" id="description" name="description" rows="4" required><?php echo htmlspecialchars($hero['description'] ?? ''); ?></textarea>
+                    <textarea class="form-control" id="description" name="description" rows="4" required><?php echo htmlspecialchars(str_replace('<br>', '', $hero['description'] ?? '')); ?></textarea>
                     <small class="text-muted d-block mt-1">Satır kesmesi için tire (-) kullanın.</small>
                     <div class="font-size-control">
                         <span class="font-size-label">Punto:</span>
@@ -313,8 +313,11 @@ if ($isAjax && $_SERVER['REQUEST_METHOD'] === 'POST')
         function updatePreview() {
             // Text updates
             $('#preview_top_title').text(topTitleInput.val());
-            $('#preview_main_title').html(mainTitleInput.val().replace(/ - /g, '<br>'));
-            $('#preview_description').html(descInput.val().replace(/ - /g, '<br class="d-none d-md-inline">'));
+            // Handle both newline and hyphen separators for backward compatibility
+            let mainTitleHtml = mainTitleInput.val().split('\n').join('<br>').replace(/ - /g, '<br>');
+            let descriptionHtml = descInput.val().split('\n').join('<br>').replace(/ - /g, '<br>');
+            $('#preview_main_title').html(mainTitleHtml);
+            $('#preview_description').html(descriptionHtml);
 
             // Size updates
             $('#preview_top_title').css('font-size', topTitleSizeInput.val() + 'px');
@@ -334,9 +337,9 @@ if ($isAjax && $_SERVER['REQUEST_METHOD'] === 'POST')
             const btn = $(this).find('button[type="submit"]');
             btn.prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Güncelleniyor...');
 
-            // Prepare data replacing hyphens with HTML for storage
-            let mainTitle = mainTitleInput.val().replace(/ - /g, '<br>');
-            let description = descInput.val().replace(/ - /g, '<br class="d-none d-md-inline">');
+            // Prepare data - use newlines instead of HTML tags for validation
+            let mainTitle = mainTitleInput.val().replace(/ - /g, '\n');
+            let description = descInput.val().replace(/ - /g, '\n');
 
             const formData = {
                 csrf_token: $('input[name="csrf_token"]').val(),

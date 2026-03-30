@@ -83,6 +83,9 @@ $csrfToken = getCsrfToken();
     }
 </style>
 
+<!-- Hidden CSRF Token for AJAX requests -->
+<input type="hidden" id="csrf_token_input" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4>Konuşmacılar Listesi</h4>
     <button class='btn btn-success' onclick='showAddSpeakerForm()'>
@@ -127,7 +130,7 @@ if (!empty($speakers)) {
 ?>
 
 <script>
-    function editSpeaker(id) {
+    window.editSpeaker = function(id) {
         $.ajax({
             url: 'edit_speaker.php',
             method: 'GET',
@@ -139,33 +142,47 @@ if (!empty($speakers)) {
                 $('#content-area').html('<div class="alert alert-danger">Düzenleme formu yüklenemedi.</div>');
             }
         });
-    }
+    };
 
-    function deleteSpeaker(id) {
+    window.deleteSpeaker = function(id) {
         if (confirm('Bu konuşmacıyı silmek istediğinize emin misiniz?')) {
+            var csrfToken = '<?php echo htmlspecialchars($csrfToken); ?>';
+            console.log('CSRF Token:', csrfToken);
+            console.log('Speaker ID:', id);
+            
             $.ajax({
                 url: 'delete_speaker.php',
                 method: 'POST',
                 data: { 
                     id: id,
-                    csrf_token: '<?php echo htmlspecialchars($csrfToken); ?>'
+                    csrf_token: csrfToken
                 },
+                dataType: 'json',
                 success: function (response) {
-                    $('#content-area').html(response);
+                    console.log('Response:', response);
+                    if (response.success) {
+                        alert(response.message);
+                        loadContent('speakers');
+                    } else {
+                        alert('Hata: ' + response.message);
+                    }
                 },
-                error: function () {
-                    $('#content-area').html('<div class="alert alert-danger">Silme işlemi gerçekleştirilemedi.</div>');
+                error: function (xhr, status, error) {
+                    console.error('Error:', error);
+                    console.error('Response:', xhr.responseText);
+                    alert('Silme işlemi gerçekleştirilemedi: ' + error);
                 }
             });
         }
-    }
+    };
 
-    function showAddSpeakerForm() {
+    window.showAddSpeakerForm = function() {
+        var csrfToken = '<?php echo htmlspecialchars($csrfToken); ?>';
         const formHtml = `
         <div class="form-container">
             <h4 class="form-title">Konuşmacı Ekle</h4>
             <form id="addSpeakerForm" enctype="multipart/form-data">
-                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken); ?>">
+                <input type="hidden" name="csrf_token" value="${csrfToken}">
                 <div class="mb-3">
                     <label for="name" class="form-label">İsim</label>
                     <input type="text" class="form-control" id="name" name="name" required>
@@ -212,9 +229,9 @@ if (!empty($speakers)) {
                 }
             });
         };
-    }
+    };
 
-    function hideAddSpeakerForm() {
+    window.hideAddSpeakerForm = function() {
         loadContent('speakers');
-    }
+    };
 </script>

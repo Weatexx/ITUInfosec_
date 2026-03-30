@@ -3,21 +3,39 @@ require_once 'security_utils.php';
 require_once 'data_manager.php';
 
 requireSecureSession();
-requireCsrfToken();
 
-$id = validateInteger($_POST['id'] ?? null, 1, PHP_INT_MAX);
+$response = ['success' => false, 'message' => ''];
 
-if ($id === null) {
-    echo "<h4 class='text-center text-danger'><i class='bi bi-exclamation-circle me-2'></i>Geçersiz sponsor ID\'si.</h4>";
-    include 'sponsors.php';
+// Debug logging
+error_log('Delete Sponsor Request - POST data: ' . json_encode($_POST));
+
+// Check CSRF token
+if (!validateCsrfToken()) {
+    error_log('CSRF Token validation failed');
+    http_response_code(403);
+    $response['message'] = 'CSRF token kontrolü başarısız.';
+    echo json_encode($response);
     exit;
 }
 
+$id = validateInteger($_POST['id'] ?? null, 1, PHP_INT_MAX);
+error_log('Validated ID: ' . ($id === null ? 'NULL' : $id));
+
+if ($id === null) {
+    $response['message'] = 'Geçersiz sponsor ID\'si.';
+    echo json_encode($response);
+    exit;
+}
+
+error_log('Deleting sponsor with ID: ' . $id);
 if ($dataManager->deleteSponsor($id)) {
-    echo "<h4 class='text-center text-success'><i class='bi bi-check-circle me-2'></i>Sponsor başarıyla silindi.</h4>";
-    include 'sponsors.php';
+    error_log('Sponsor deleted successfully');
+    $response['success'] = true;
+    $response['message'] = 'Sponsor başarıyla silindi.';
+    echo json_encode($response);
 } else {
-    echo "<h4 class='text-center text-danger'><i class='bi bi-exclamation-circle me-2'></i>Silme işlemi başarısız.</h4>";
-    include 'sponsors.php';
+    error_log('Failed to delete sponsor');
+    $response['message'] = 'Silme işlemi başarısız.';
+    echo json_encode($response);
 }
 ?>

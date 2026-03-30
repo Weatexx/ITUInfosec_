@@ -387,8 +387,16 @@ $csrfToken = getCsrfToken();
             // We assume the php files return just forms/tables. We will wrap them slightly nicely using JS if they don't have container
             $('#content-area').html('<div class="fade-in">' + data + '</div>');
 
-            // Re-bind scripts if any included in the loaded content
-            // Note: inline scripts in loaded content execute automatically by jQuery .html()
+            // Execute scripts that are included in the loaded content
+            // jQuery .html() doesn't execute scripts by default, so we need to do it manually
+            $('#content-area').find('script').each(function() {
+              try {
+                $.globalEval($(this).text());
+                console.log('Script executed successfully');
+              } catch(e) {
+                console.error('Error executing script:', e);
+              }
+            });
           },
           error: function () {
             $('#content-area').html('<div class="alert alert-danger">İçerik yüklenemedi.</div>');
